@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App';
 import { ThemeProvider } from './hooks/useTheme';
-import React from 'react';
+
 
 // Mock useWeather to avoid complex API setup in this test
 vi.mock('./hooks/useWeather', () => ({
