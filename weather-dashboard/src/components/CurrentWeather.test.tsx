@@ -1,6 +1,6 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CurrentWeather } from './CurrentWeather';
-import { vi } from 'vitest';
 import type { WeatherData } from '../hooks/useWeather';
 
 describe('CurrentWeather component', () => {

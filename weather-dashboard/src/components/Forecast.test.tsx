@@ -1,6 +1,6 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from '@testing-library/react';
 import { Forecast } from './Forecast';
-import { vi } from 'vitest';
 import type { ForecastData } from '../hooks/useWeather';
 
 describe('Forecast component', () => {

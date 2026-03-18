@@ -4,9 +4,12 @@ import { Forecast } from './components/Forecast'
 import { Favorites } from './components/Favorites'
 import { SearchHistory } from './components/SearchHistory'
 import { useWeather } from './hooks/useWeather'
+import { useTheme } from './hooks/useTheme'
+import { Sun, Moon } from 'lucide-react'
 import './styles/App.css'
 
 function App() {
+  const { theme, toggleTheme } = useTheme()
   const { 
     weather, 
     forecast, 
@@ -36,12 +39,15 @@ function App() {
   };
 
   return (
-    <div className={`app-container ${weather?.condition?.toLowerCase() || 'default'}`}>
+    <div className={`app-container theme-${theme} ${weather?.condition?.toLowerCase() || 'default'}`}>
       <main className="dashboard">
         <header className="header">
           <div className="header-top">
             <h1>Weather Dashboard</h1>
             <div className="header-actions">
+              <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              </button>
               <button className="unit-toggle" onClick={toggleUnit} title="Toggle Temperature Unit">
                 Switch to °{unit === 'C' ? 'F' : 'C'}
               </button>
