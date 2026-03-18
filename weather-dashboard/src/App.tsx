@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import { Moon, Sun } from 'lucide-react'
 import { SearchBar } from './components/SearchBar'
 import { CurrentWeather } from './components/CurrentWeather'
 import { Forecast } from './components/Forecast'
@@ -23,6 +25,17 @@ function App() {
     clearHistory,
   } = useWeather()
 
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(prev => !prev);
+
   const handleSearch = (city: string) => {
     fetchWeather(city)
   }
@@ -36,14 +49,17 @@ function App() {
   };
 
   return (
-    <div className={`app-container ${weather?.condition?.toLowerCase() || 'default'}`}>
+    <div className={`app-container ${isDarkMode ? 'dark-theme' : ''}`}>
       <main className="dashboard">
         <header className="header">
           <div className="header-top">
             <h1>Weather Dashboard</h1>
             <div className="header-actions">
+              <button className="theme-toggle" onClick={toggleTheme} title="Toggle Theme">
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
               <button className="unit-toggle" onClick={toggleUnit} title="Toggle Temperature Unit">
-                Switch to °{unit === 'C' ? 'F' : 'C'}
+                °{unit === 'C' ? 'F' : 'C'}
               </button>
               <SearchBar onSearch={handleSearch} />
             </div>
