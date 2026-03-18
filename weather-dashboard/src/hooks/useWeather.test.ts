@@ -122,4 +122,83 @@ describe('useWeather hook', () => {
     expect(result.current.forecast).toEqual([]);
     expect(result.current.error).toBe('City not found. Please try again.');
   });
+
+  it('should add successful searches to searchHistory', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    act(() => {
+      result.current.fetchWeather('London');
+    });
+    
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(result.current.searchHistory).toEqual(['London']);
+  });
+
+  it('should prevent duplicate entries and move existing to front', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    act(() => { result.current.fetchWeather('London'); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    
+    act(() => { result.current.fetchWeather('Paris'); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    
+    // Test case-insensitive duplicate prevention
+    act(() => { result.current.fetchWeather('london'); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+
+    expect(result.current.searchHistory).toEqual(['london', 'Paris']);
+  });
+
+  it('should limit searchHistory to 5 entries', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    const cities = ['City1', 'City2', 'City3', 'City4', 'City5', 'City6'];
+    
+    for (const city of cities) {
+      act(() => { result.current.fetchWeather(city); });
+      await act(async () => { vi.advanceTimersByTime(1000); });
+    }
+
+    expect(result.current.searchHistory).toEqual([
+      'City6', 'City5', 'City4', 'City3', 'City2'
+    ]);
+  });
+
+  it('should clear searchHistory', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    act(() => { result.current.fetchWeather('London'); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    
+    expect(result.current.searchHistory.length).toBe(1);
+    
+    act(() => {
+      result.current.clearHistory();
+    });
+    
+    expect(result.current.searchHistory).toEqual([]);
+  });
+
+  it('should persist searchHistory in localStorage', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    act(() => { result.current.fetchWeather('Berlin'); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    
+    const stored = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    expect(stored).toContain('Berlin');
+  });
+
+  it('should ignore empty string searches in searchHistory', async () => {
+    const { result } = renderHook(() => useWeather());
+    
+    act(() => { result.current.fetchWeather('   '); });
+    await act(async () => { vi.advanceTimersByTime(1000); });
+    
+    expect(result.current.searchHistory).toEqual([]);
+  });
 });

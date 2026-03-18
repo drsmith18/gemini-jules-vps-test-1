@@ -47,10 +47,18 @@ export function useWeather() {
     const stored = localStorage.getItem('favoriteCities');
     return stored ? JSON.parse(stored) : [];
   });
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    const stored = localStorage.getItem('searchHistory');
+    return stored ? JSON.parse(stored) : [];
+  });
 
   useEffect(() => {
     localStorage.setItem('favoriteCities', JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+  }, [searchHistory]);
 
   const toggleUnit = useCallback(() => {
     setUnit(prev => prev === 'C' ? 'F' : 'C');
@@ -74,6 +82,19 @@ export function useWeather() {
     setFavorites(prev => prev.filter(f => f !== city));
   }, []);
 
+  const updateHistory = useCallback((city: string) => {
+    if (!city.trim()) return;
+    const trimmedCity = city.trim();
+    setSearchHistory(prev => {
+      const filtered = prev.filter(c => c.toLowerCase() !== trimmedCity.toLowerCase());
+      return [trimmedCity, ...filtered].slice(0, 5);
+    });
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setSearchHistory([]);
+  }, []);
+
   const fetchWeather = async (city: string) => {
     setLoading(true);
     setError(null);
@@ -87,6 +108,7 @@ export function useWeather() {
       } else {
         setWeather({ ...MOCK_WEATHER, city });
         setForecast(MOCK_FORECAST);
+        updateHistory(city);
       }
       setLoading(false);
     }, 1000);
@@ -99,10 +121,12 @@ export function useWeather() {
     error,
     unit,
     favorites,
+    searchHistory,
     fetchWeather,
     toggleUnit,
     convertTemp,
     addFavorite,
     removeFavorite,
+    clearHistory,
   };
 }

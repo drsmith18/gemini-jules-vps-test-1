@@ -2,6 +2,7 @@ import { SearchBar } from './components/SearchBar'
 import { CurrentWeather } from './components/CurrentWeather'
 import { Forecast } from './components/Forecast'
 import { Favorites } from './components/Favorites'
+import { SearchHistory } from './components/SearchHistory'
 import { useWeather } from './hooks/useWeather'
 import './styles/App.css'
 
@@ -13,11 +14,13 @@ function App() {
     error, 
     unit,
     favorites,
+    searchHistory,
     fetchWeather, 
     toggleUnit,
     convertTemp,
     addFavorite,
     removeFavorite,
+    clearHistory,
   } = useWeather()
 
   const handleSearch = (city: string) => {
@@ -45,6 +48,11 @@ function App() {
               <SearchBar onSearch={handleSearch} />
             </div>
           </div>
+          <SearchHistory 
+            history={searchHistory} 
+            onSelect={fetchWeather} 
+            onClear={clearHistory} 
+          />
         </header>
 
         <div className="layout-main">
