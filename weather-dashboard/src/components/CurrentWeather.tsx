@@ -1,5 +1,5 @@
 import React from 'react';
-import { Droplets, Wind, Star } from 'lucide-react';
+import { Droplets, Wind, Star, RefreshCw } from 'lucide-react';
 import type { WeatherData, TemperatureUnit } from '../hooks/useWeather';
 
 interface CurrentWeatherProps {
@@ -8,6 +8,8 @@ interface CurrentWeatherProps {
   convertedTemp: number;
   isFavorite: boolean;
   onToggleFavorite: (city: string) => void;
+  lastUpdated: Date | null;
+  onRefresh: () => void;
 }
 
 export const CurrentWeather: React.FC<CurrentWeatherProps> = ({ 
@@ -15,20 +17,31 @@ export const CurrentWeather: React.FC<CurrentWeatherProps> = ({
   unit, 
   convertedTemp,
   isFavorite,
-  onToggleFavorite 
+  onToggleFavorite,
+  lastUpdated,
+  onRefresh
 }) => {
   return (
     <section className="current-weather">
       <div className="main-info">
         <div className="city-header">
           <h2 className="city-name">{weather.city}</h2>
-          <button 
-            className={`favorite-btn ${isFavorite ? 'active' : ''}`}
-            onClick={() => onToggleFavorite(weather.city)}
-            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Star size={24} fill={isFavorite ? "currentColor" : "none"} />
-          </button>
+          <div className="city-actions">
+            <button 
+              className={`favorite-btn ${isFavorite ? 'active' : ''}`}
+              onClick={() => onToggleFavorite(weather.city)}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Star size={24} fill={isFavorite ? "currentColor" : "none"} />
+            </button>
+            <button 
+              className="refresh-btn"
+              onClick={onRefresh}
+              title="Refresh weather"
+            >
+              <RefreshCw size={20} />
+            </button>
+          </div>
         </div>
         <div className="temp-container">
           <img 
@@ -39,6 +52,11 @@ export const CurrentWeather: React.FC<CurrentWeatherProps> = ({
           <span className="temperature">{convertedTemp}°{unit}</span>
         </div>
         <p className="description">{weather.description}</p>
+        {lastUpdated && (
+          <p className="last-updated">
+            Last updated: {lastUpdated.toLocaleTimeString()}
+          </p>
+        )}
       </div>
       
       <div className="details-grid">

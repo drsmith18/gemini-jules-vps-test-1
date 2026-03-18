@@ -18,12 +18,14 @@ function App() {
     unit,
     favorites,
     searchHistory,
+    lastUpdated,
     fetchWeather, 
     toggleUnit,
     convertTemp,
     addFavorite,
     removeFavorite,
     clearHistory,
+    refreshWeather,
   } = useWeather()
 
   const handleSearch = (city: string) => {
@@ -87,6 +89,8 @@ function App() {
                   convertedTemp={convertTemp(weather.temperature)}
                   isFavorite={favorites.includes(weather.city)}
                   onToggleFavorite={handleToggleFavorite}
+                  lastUpdated={lastUpdated}
+                  onRefresh={refreshWeather}
                 />
                 <Forecast 
                   forecast={forecast} 
