@@ -43,6 +43,7 @@ export function useWeather() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unit, setUnit] = useState<TemperatureUnit>('C');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [favorites, setFavorites] = useState<string[]>(() => {
     const stored = localStorage.getItem('favoriteCities');
     return stored ? JSON.parse(stored) : [];
@@ -108,11 +109,18 @@ export function useWeather() {
       } else {
         setWeather({ ...MOCK_WEATHER, city });
         setForecast(MOCK_FORECAST);
+        setLastUpdated(new Date());
         updateHistory(city);
       }
       setLoading(false);
     }, 1000);
   };
+
+  const refreshWeather = useCallback(() => {
+    if (weather) {
+      fetchWeather(weather.city);
+    }
+  }, [weather, fetchWeather]);
 
   return {
     weather,
@@ -120,6 +128,7 @@ export function useWeather() {
     loading,
     error,
     unit,
+    lastUpdated,
     favorites,
     searchHistory,
     fetchWeather,
@@ -128,5 +137,6 @@ export function useWeather() {
     addFavorite,
     removeFavorite,
     clearHistory,
+    refreshWeather,
   };
 }
