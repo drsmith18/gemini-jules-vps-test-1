@@ -15,6 +15,7 @@ describe('CurrentWeather component', () => {
   };
 
   const mockOnToggleFavorite = vi.fn();
+  const mockOnRefresh = vi.fn();
 
   it('renders correctly with given weather data', () => {
     render(
@@ -24,6 +25,8 @@ describe('CurrentWeather component', () => {
         convertedTemp={15}
         isFavorite={false}
         onToggleFavorite={mockOnToggleFavorite}
+        lastUpdated={new Date('2024-01-01T12:00:00')}
+        onRefresh={mockOnRefresh}
       />
     );
 
@@ -46,6 +49,8 @@ describe('CurrentWeather component', () => {
         convertedTemp={15}
         isFavorite={false}
         onToggleFavorite={mockOnToggleFavorite}
+        lastUpdated={null}
+        onRefresh={mockOnRefresh}
       />
     );
 
@@ -62,6 +67,8 @@ describe('CurrentWeather component', () => {
         convertedTemp={15}
         isFavorite={true}
         onToggleFavorite={mockOnToggleFavorite}
+        lastUpdated={null}
+        onRefresh={mockOnRefresh}
       />
     );
 
