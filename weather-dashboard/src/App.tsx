@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react'
 import { SearchBar } from './components/SearchBar'
 import { CurrentWeather } from './components/CurrentWeather'
 import { Forecast } from './components/Forecast'
@@ -5,7 +6,6 @@ import { Favorites } from './components/Favorites'
 import { SearchHistory } from './components/SearchHistory'
 import { useWeather } from './hooks/useWeather'
 import { useTheme } from './hooks/useTheme'
-import { Sun, Moon } from 'lucide-react'
 import './styles/App.css'
 
 function App() {
@@ -39,7 +39,7 @@ function App() {
   };
 
   return (
-    <div className={`app-container theme-${theme} ${weather?.condition?.toLowerCase() || 'default'}`}>
+    <div className={`app-container theme-${theme}`}>
       <main className="dashboard">
         <header className="header">
           <div className="header-top">
@@ -49,7 +49,7 @@ function App() {
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
               <button className="unit-toggle" onClick={toggleUnit} title="Toggle Temperature Unit">
-                Switch to °{unit === 'C' ? 'F' : 'C'}
+                °{unit === 'C' ? 'F' : 'C'}
               </button>
               <SearchBar onSearch={handleSearch} />
             </div>
