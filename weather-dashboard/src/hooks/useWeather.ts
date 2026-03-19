@@ -1,41 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { weatherApiService } from '../services/weatherApi';
+import type { WeatherData, ForecastData } from '../services/weatherApi';
 
 export type TemperatureUnit = 'C' | 'F';
-
-export interface WeatherData {
-  city: string;
-  temperature: number;
-  description: string;
-  humidity: number;
-  windSpeed: number;
-  icon: string;
-  condition: string;
-}
-
-export interface ForecastData {
-  date: string;
-  temperature: number;
-  description: string;
-  icon: string;
-}
-
-const MOCK_WEATHER: WeatherData = {
-  city: "San Francisco",
-  temperature: 18,
-  description: "Partly cloudy",
-  humidity: 65,
-  windSpeed: 12,
-  icon: "03d",
-  condition: "Clouds"
-};
-
-const MOCK_FORECAST: ForecastData[] = [
-  { date: "Mon", temperature: 19, description: "Sunny", icon: "01d" },
-  { date: "Tue", temperature: 17, description: "Cloudy", icon: "03d" },
-  { date: "Wed", temperature: 16, description: "Rain", icon: "10d" },
-  { date: "Thu", temperature: 18, description: "Partly cloudy", icon: "02d" },
-  { date: "Fri", temperature: 20, description: "Clear", icon: "01d" },
-];
+export type { WeatherData, ForecastData };
 
 export function useWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -100,20 +68,22 @@ export function useWeather() {
     setLoading(true);
     setError(null);
     
-    // Simulate API delay
-    setTimeout(() => {
-      if (city.toLowerCase() === 'error') {
-        setError("City not found. Please try again.");
-        setWeather(null);
-        setForecast([]);
-      } else {
-        setWeather({ ...MOCK_WEATHER, city });
-        setForecast(MOCK_FORECAST);
-        setLastUpdated(new Date());
-        updateHistory(city);
-      }
+    try {
+      const [weatherData, forecastData] = await Promise.all([
+        weatherApiService.fetchWeather(city),
+        weatherApiService.fetchForecast(city)
+      ]);
+      setWeather(weatherData);
+      setForecast(forecastData);
+      setLastUpdated(new Date());
+      updateHistory(city);
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+      setWeather(null);
+      setForecast([]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const refreshWeather = useCallback(() => {

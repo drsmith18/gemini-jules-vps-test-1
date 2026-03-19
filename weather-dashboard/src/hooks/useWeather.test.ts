@@ -1,6 +1,14 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useWeather } from './useWeather';
+import { weatherApiService } from '../services/weatherApi';
+
+vi.mock('../services/weatherApi', () => ({
+  weatherApiService: {
+    fetchWeather: vi.fn(),
+    fetchForecast: vi.fn(),
+  },
+}));
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -18,7 +26,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 describe('useWeather hook', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.useFakeTimers();
+    vi.clearAllMocks();
   });
 
   it('should initialize with default values', () => {
@@ -85,36 +93,48 @@ describe('useWeather hook', () => {
   });
 
   it('should fetch weather data successfully', async () => {
+    const mockWeatherData = { city: 'Tokyo', temperature: 20, description: 'Sunny', humidity: 50, windSpeed: 10, icon: '01d', condition: 'Clear' };
+    const mockForecastData = [{ date: 'Mon', temperature: 20, description: 'Sunny', icon: '01d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
+    let fetchPromise: Promise<void>;
     act(() => {
-      result.current.fetchWeather('Tokyo');
+      fetchPromise = result.current.fetchWeather('Tokyo');
     });
 
     expect(result.current.loading).toBe(true);
     expect(result.current.error).toBeNull();
     
     await act(async () => {
-      vi.advanceTimersByTime(1000);
+      await fetchPromise;
     });
 
     expect(result.current.loading).toBe(false);
     expect(result.current.weather?.city).toBe('Tokyo');
-    expect(result.current.forecast.length).toBeGreaterThan(0);
+    expect(result.current.weather?.temperature).toBe(20);
+    expect(result.current.forecast).toEqual(mockForecastData);
     expect(result.current.error).toBeNull();
   });
 
   it('should handle fetch weather error', async () => {
+    vi.mocked(weatherApiService.fetchWeather).mockRejectedValue(new Error('City not found. Please try again.'));
+    vi.mocked(weatherApiService.fetchForecast).mockRejectedValue(new Error('City not found. Please try again.'));
+
     const { result } = renderHook(() => useWeather());
     
+    let fetchPromise: Promise<void>;
     act(() => {
-      result.current.fetchWeather('error');
+      fetchPromise = result.current.fetchWeather('error');
     });
     
     expect(result.current.loading).toBe(true);
     
     await act(async () => {
-      vi.advanceTimersByTime(1000);
+      await fetchPromise;
     });
 
     expect(result.current.loading).toBe(false);
@@ -124,43 +144,54 @@ describe('useWeather hook', () => {
   });
 
   it('should add successful searches to searchHistory', async () => {
+    const mockWeatherData = { city: 'London', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
-    act(() => {
-      result.current.fetchWeather('London');
-    });
-    
     await act(async () => {
-      vi.advanceTimersByTime(1000);
+      await result.current.fetchWeather('London');
     });
 
     expect(result.current.searchHistory).toEqual(['London']);
   });
 
   it('should prevent duplicate entries and move existing to front', async () => {
+    const mockWeatherData = { city: 'London', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
-    act(() => { result.current.fetchWeather('London'); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    await act(async () => { await result.current.fetchWeather('London'); });
     
-    act(() => { result.current.fetchWeather('Paris'); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue({ ...mockWeatherData, city: 'Paris' });
+    await act(async () => { await result.current.fetchWeather('Paris'); });
     
     // Test case-insensitive duplicate prevention
-    act(() => { result.current.fetchWeather('london'); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue({ ...mockWeatherData, city: 'london' });
+    await act(async () => { await result.current.fetchWeather('london'); });
 
     expect(result.current.searchHistory).toEqual(['london', 'Paris']);
   });
 
   it('should limit searchHistory to 5 entries', async () => {
+    const mockWeatherData = { city: 'London', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
     const cities = ['City1', 'City2', 'City3', 'City4', 'City5', 'City6'];
     
     for (const city of cities) {
-      act(() => { result.current.fetchWeather(city); });
-      await act(async () => { vi.advanceTimersByTime(1000); });
+      vi.mocked(weatherApiService.fetchWeather).mockResolvedValue({ ...mockWeatherData, city });
+      await act(async () => { await result.current.fetchWeather(city); });
     }
 
     expect(result.current.searchHistory).toEqual([
@@ -169,10 +200,15 @@ describe('useWeather hook', () => {
   });
 
   it('should clear searchHistory', async () => {
+    const mockWeatherData = { city: 'London', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
-    act(() => { result.current.fetchWeather('London'); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    await act(async () => { await result.current.fetchWeather('London'); });
     
     expect(result.current.searchHistory.length).toBe(1);
     
@@ -184,20 +220,30 @@ describe('useWeather hook', () => {
   });
 
   it('should persist searchHistory in localStorage', async () => {
+    const mockWeatherData = { city: 'Berlin', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
-    act(() => { result.current.fetchWeather('Berlin'); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    await act(async () => { await result.current.fetchWeather('Berlin'); });
     
     const stored = JSON.parse(localStorage.getItem('searchHistory') || '[]');
     expect(stored).toContain('Berlin');
   });
 
   it('should ignore empty string searches in searchHistory', async () => {
+    const mockWeatherData = { city: '   ', temperature: 15, description: 'Rain', humidity: 80, windSpeed: 15, icon: '09d', condition: 'Rain' };
+    const mockForecastData = [{ date: 'Mon', temperature: 15, description: 'Rain', icon: '09d' }];
+
+    vi.mocked(weatherApiService.fetchWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApiService.fetchForecast).mockResolvedValue(mockForecastData);
+
     const { result } = renderHook(() => useWeather());
     
-    act(() => { result.current.fetchWeather('   '); });
-    await act(async () => { vi.advanceTimersByTime(1000); });
+    await act(async () => { await result.current.fetchWeather('   '); });
     
     expect(result.current.searchHistory).toEqual([]);
   });
