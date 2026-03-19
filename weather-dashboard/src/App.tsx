@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { SearchBar } from './components/SearchBar'
 import { CurrentWeather } from './components/CurrentWeather'
 import { Forecast } from './components/Forecast'
 import { Favorites } from './components/Favorites'
 import { SearchHistory } from './components/SearchHistory'
+import { Toast } from './components/Toast'
 import { useWeather } from './hooks/useWeather'
 import { useTheme } from './hooks/useTheme'
 import './styles/App.css'
@@ -27,6 +29,14 @@ function App() {
     clearHistory,
     refreshWeather,
   } = useWeather()
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      setToastMessage(error);
+    }
+  }, [error]);
 
   const handleSearch = (city: string) => {
     fetchWeather(city)
@@ -72,16 +82,15 @@ function App() {
           
           <div className="content-area">
             {loading && <div className="status">Loading weather data...</div>}
-            {error && <div className="status error">{error}</div>}
-
-            {!loading && !error && !weather && (
+            
+            {!loading && !weather && (
               <div className="status welcome">
                 <h2>Welcome!</h2>
                 <p>Search for a city to see the current weather and 5-day forecast.</p>
               </div>
             )}
 
-            {weather && !loading && !error && (
+            {weather && !loading && (
               <div className="weather-content">
                 <CurrentWeather 
                   weather={weather} 
@@ -102,6 +111,14 @@ function App() {
           </div>
         </div>
       </main>
+      
+      {toastMessage && (
+        <Toast 
+          message={toastMessage} 
+          type="error" 
+          onClose={() => setToastMessage(null)} 
+        />
+      )}
     </div>
   )
 }
